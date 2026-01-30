@@ -3,7 +3,7 @@ void interpret(char* code, unsigned char* tape) {
     unsigned char* ptr = tape;
     
     while (*pc) {
-        int jump = 1;
+        int jump = 0;
 
         switch (*pc) {
             case '>': ptr++; break;
@@ -41,7 +41,8 @@ void interpret(char* code, unsigned char* tape) {
                         else if (*pc == ']') 
                             depth--;
                     }
-                    jump = 0; // already incremented pc
+                    
+                    jump = 1; // already incremented pc
                 }
                 break;
             }
@@ -55,12 +56,14 @@ void interpret(char* code, unsigned char* tape) {
                         else if (*pc == '[') 
                             depth--;
                     }
-                    jump = 0; // already decremented pc
+
+                    jump = 1; // already decremented pc
                 }
                 break;
             }
         }
-        if (jump) {
+
+        if (!jump) {
             pc++;
         }
     }
