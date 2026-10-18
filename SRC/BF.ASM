@@ -6,6 +6,8 @@ TAPE_SIZE   equ 30000
 filename db 13 dup(?)
 buffer   db BUFFER_SIZE dup(?)
 tape     db TAPE_SIZE dup(?)
+msg_open_fail db 'Open failed$'
+msg_read_fail db 'Read failed$'
 
 .code
 org 100h         
@@ -81,8 +83,5 @@ print:
     mov ah, 09h
     int 21h
     ret
-
-msg_open_fail db 'Open failed$'
-msg_read_fail db 'Read failed$'
 
 end start
