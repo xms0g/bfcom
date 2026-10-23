@@ -20,30 +20,42 @@ start:
     mov cx, TAPE_SIZE
     rep stosb
     ; Get the command line from the PSP
-    mov si, 80h                 ; SI = offset 0x80 in PSP = length of command line tail
-    mov cl, [si]                ; CL = number of characters in command line tail
-    mov si, 81h                 ; SI = offset 0x81 in PSP = start of command line tail string
+    ; SI = offset 0x80 in PSP = length of command line tail
+    ; CL = number of characters in command line tail
+    ; SI = offset 0x81 in PSP = start of command line tail string
+    mov si, 80h                
+    mov cl, [si]                
+    mov si, 81h                 
     xor ch, ch
     lea di, filename 
 cpy_loop:
-    lodsb                       ; Load byte from DS:SI into AL and increment SI
-    cmp al, 0Dh                 ; Check for carriage return (end of command line)
-    je cpy_done                 ; If CR, end copying
-    cmp al, ' '                 
-    je cpy_loop                 ; Skip spaces, load next char
-    stosb                       ; Store AL into ES:DI and increment DI
+    ; Load byte from DS:SI into AL and increment SI
+    lodsb
+    ; Check for carriage return (end of command line)                      
+    cmp al, 0Dh
+    ; If CR, end copying                 
+    je cpy_done                
+    cmp al, ' '   
+    ; Skip spaces, load next char              
+    je cpy_loop
+    ; Store AL into ES:DI and increment DI                 
+    stosb                      
     loop cpy_loop
 cpy_done:
-    xor al, al                  ; Null-terminate the filename string
+    ; Null-terminate the filename string
+    xor al, al                  
     stosb 
     
     ; Open the file specified by filename (read-only)
     mov ah, 3Dh
-    xor al, al                  ; Read-only mode (0)
-    lea dx, filename            ; DS:DX points to filename
+    ; Read-only mode (0)
+    xor al, al
+    ; DS:DX points to filename                  
+    lea dx, filename            
     int 21h
-    jc open_fail    
-    mov bx, ax                  ; Save returned file handle in BX
+    jc open_fail
+    ; Save returned file handle in BX    
+    mov bx, ax                  
     
     ; Read up to XXX bytes from file into buffer
     mov ah, 3Fh
@@ -51,9 +63,10 @@ cpy_done:
     lea dx, buffer
     int 21h
     jc read_fail
-    
-    mov si, ax                  ; AX = number of bytes actually read
-    mov byte ptr buffer[si], 0  ; Null-terminate buffer at end of data read
+    ; AX = number of bytes actually read
+    mov si, ax
+    ; Null-terminate buffer at end of data read               
+    mov byte ptr buffer[si], 0  
     
     push ds
     push offset tape
