@@ -6,6 +6,10 @@ TAPE_SIZE   equ 30000
 org 100h         
 
 start:
+    push bp
+    mov bp, sp
+    sub sp, 4
+
     mov di, offset tape
     xor al, al
     mov cx, TAPE_SIZE
@@ -19,24 +23,23 @@ start:
     mov si, 81h                 
     xor ch, ch
     lea di, filename 
-CPY_LOOP:
+cpy_loop:
     ; Load byte from DS:SI into AL and increment SI
     lodsb
     ; Check for carriage return (end of command line)                      
     cmp al, 0Dh
     ; If CR, end copying                 
-    je CPY_DONE                
+    je cpy_done                
     cmp al, ' '   
     ; Skip spaces, load next char              
-    je CPY_LOOP
+    je cpy_loop
     ; Store AL into ES:DI and increment DI                 
     stosb                      
-    loop CPY_LOOP
-CPY_DONE:
+    loop cpy_loop
+cpy_done:
     ; Null-terminate the filename string
     xor al, al                  
     stosb 
-    
     ; Open the file specified by filename (read-only)
     mov ah, 3Dh
     ; Read-only mode (0)
@@ -44,164 +47,144 @@ CPY_DONE:
     ; DS:DX points to filename                  
     lea dx, filename            
     int 21h
-    jc OPEN_FAIL
-    ; Save returned file handle in BX    
-    mov bx, ax                  
-    
+    jc fail
+    ; Save returned file handle in [bp-4]    
+    mov word ptr [bp-4], ax
     ; Read up to XXX bytes from file into buffer
+    mov bx, ax 
     mov ah, 3Fh
     mov cx, BUFFER_SIZE - 1
     mov dx, offset buffer
     int 21h
-    jc READ_FAIL
+    jc fail
     ; AX = number of bytes actually read
     mov si, ax
     ; Null-terminate buffer at end of data read               
     mov byte ptr buffer[si], 0
-    jmp START_INTR
-OPEN_FAIL:
-    ; handle open error
-    mov dx, offset msg_open_fail
-    call print
+    jmp start_intr
+fail:
     jmp done
-READ_FAIL:
-    ; handle read error
-    mov dx, offset msg_read_fail
-    call print
-    jmp done
-START_INTR:   
+start_intr:   
     push ds
     push si
     push di
-    push bp
-    mov bp, sp
-    sub sp, 2
-
+    
     mov si, offset buffer
     mov di, offset tape
-    jmp	CHECK_CHAR
-MAIN_LOOP:
+    jmp	check_char
+main_loop:
     ; jump = 0
     mov	word ptr [bp-2], 0
     mov	al, byte ptr [si]
     cbw	
 	cmp	ax, '>'
-    je MOVE_R
+    je move_r
     cmp ax, '<'
-    je MOVE_L
+    je move_l
     cmp ax, '+'
-    je INC_CURR
+    je inc_curr
     cmp ax, '-'
-    je DEC_CURR
+    je dec_curr
     cmp ax, '.'
-    je PRINT_CURR
+    je print_curr
     cmp ax, ','
-    je WRITE_CURR
+    je write_curr
     cmp ax, '['
-    je LOOP_START
+    je loop_start
     cmp ax, ']'
-    je LOOP_END
-    jmp CHECK_JUMP
-MOVE_R:
+    je loop_end
+    jmp check_jump
+move_r:
     inc	di
-	jmp	CHECK_JUMP
-MOVE_L:
+	jmp	check_jump
+move_l:
     dec di
-    jmp	CHECK_JUMP
-INC_CURR:
+    jmp	check_jump
+inc_curr:
     inc	byte ptr [di]
-	jmp	CHECK_JUMP
-DEC_CURR:
+	jmp	check_jump
+dec_curr:
     dec	byte ptr [di]
-	jmp	CHECK_JUMP
-PRINT_CURR:
+	jmp	check_jump
+print_curr:
     mov	dl, byte ptr [di]
     mov	ah, 2
     int 21h
-    jmp	CHECK_JUMP
-WRITE_CURR:
+    jmp	check_jump
+write_curr:
     mov	ah, 1
     int 21h
     mov	byte ptr [di], al
-    jmp	CHECK_JUMP
-LOOP_START:
+    jmp	check_jump
+loop_start:
     mov	al, byte ptr [di]
 	mov	ah, 0
 	or ax, ax
-	jne	CHECK_JUMP
+	jne	check_jump
     mov	cx, 1
-	jmp	WHILE1_CHECK
-WHILE1_START:
+	jmp	while1_check
+while1_start:
     cmp	byte ptr [si], '['
-	jne	ELSE1
+	jne	else1
 	inc	cx
-	jmp	WHILE1_CHECK
-ELSE1:
+	jmp	while1_check
+else1:
     cmp	byte ptr [si], ']'
-	jne	WHILE1_CHECK
+	jne	while1_check
 	dec	cx
-WHILE1_CHECK:
+while1_check:
     or cx, cx
-	jle	JUMP_1
+	jle	set_jump_1
 	inc	si
 	mov	bx, si
 	cmp	byte ptr [bx], 0
-	jne	WHILE1_START
-LOOP_END:
+	jne	while1_start
+loop_end:
     cmp	byte ptr [di], 0
-    je CHECK_JUMP
+    je check_jump
     mov	bx, 1
-	jmp	WHILE2_CHECK
-WHILE2_START:
+	jmp	while2_check
+while2_start:
     cmp	byte ptr [si], ']'
-	jne	ELSE2
+	jne	else2
 	inc	bx
-	jmp	WHILE2_CHECK
-ELSE2:
+	jmp	while2_check
+else2:
     cmp	byte ptr [si], '['
-	jne	WHILE2_CHECK	
+	jne	while2_check	
 	dec	bx
-WHILE2_CHECK:
+while2_check:
     or	bx, bx
-	jle	JUMP_1
+	jle	set_jump_1
 	dec	si
 	cmp	si, offset buffer
-	jae	WHILE2_START
-JUMP_1:
+	jae	while2_start
+set_jump_1:
     mov	word ptr [bp-2], 1
-    jmp CHECK_JUMP
-CHECK_JUMP:
+    jmp check_jump
+check_jump:
     cmp	word ptr [bp-2], 0
-	jne	CHECK_CHAR	
+	jne	check_char	
 	inc	si
-CHECK_CHAR:
+check_char:
     cmp	byte ptr [si], 0
-	je FINAL
-	jmp	MAIN_LOOP
-FINAL:
-    mov sp, bp
-    pop bp
+	je final
+	jmp	main_loop
+final:
     pop di
     pop si
     pop ds
-    jmp close_file
-
-close_file:
+    mov sp, bp
+    pop bp
+done:
+    ; close file
+    mov bx, word ptr [bp-4]
     mov ah, 3Eh
     int 21h
-done: 
     mov ax, 4c00h
     int 21h
-
-print:
-    mov ah, 09h
-    int 21h
-    ret
   
 filename db 13 dup(?)
 buffer   equ (offset filename + 13)
 tape     equ (buffer + BUFFER_SIZE)
-
-msg_open_fail db 'Open failed$'
-msg_read_fail db 'Read failed$'
 end start
