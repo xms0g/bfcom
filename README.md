@@ -1,6 +1,6 @@
 # bfcom
 
-A tiny Brainfuck interpreter (only 290 bytes) packed into a single MS-DOS `.COM` file. You can download the `.COM` executable from [itch.io](https://xms0g.itch.io/bfcom).
+A tiny Brainfuck interpreter (only 291 bytes) packed into a single MS-DOS `.COM` file. You can download the `.COM` executable from [itch.io](https://xms0g.itch.io/bfcom).
  
 <img src="IMG/bfcom.gif" alt="image" width="700" height="auto">
 
