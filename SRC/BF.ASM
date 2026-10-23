@@ -9,7 +9,7 @@ start:
     push bp
     mov bp, sp
     sub sp, 4
-
+    
     mov di, offset tape
     xor al, al
     mov cx, TAPE_SIZE
@@ -143,7 +143,7 @@ loop_end:
     cmp	byte ptr [di], 0
     je check_jump
     mov	bx, 1
-	jmp	while2_check
+	dec si
 while2_start:
     cmp	byte ptr [si], ']'
 	jne	else2
@@ -159,6 +159,7 @@ while2_check:
 	dec	si
 	cmp	si, offset buffer
 	jae	while2_start
+    jmp close_file
 set_jump_1:
     mov	word ptr [bp-2], 1
     jmp check_jump
