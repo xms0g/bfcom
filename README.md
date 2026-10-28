@@ -13,12 +13,6 @@ Because MS-DOS deserves some love from the 21st century.
 
 And honestly — why not?
 
-## Prerequisites
-- **Turbo C++** (`TCC.EXE`) version 3.0 or later  
-- **Turbo Assembler** (`TASM.EXE`) version 4.1 or later  
-- **Turbo Linker** (`TLINK.EXE`) version 5.0 or later  
-- **DOSBox** emulator or a real MS-DOS-compatible computer
-
 ## Usage
 Run the interpreter from a DOS prompt with a `.BF` file as argument:
 
